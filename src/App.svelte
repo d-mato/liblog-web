@@ -1,34 +1,54 @@
 <script>
-export let name;
-export let messages = [];
+import { initializeApp } from 'firebase/app'
+import { getMessaging, getToken } from 'firebase/messaging'
+export let name = ''
+
+let messages = []
+let token = ''
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDbnu85iKQ_ttu-Dlo8gg4g3lc1Z0xZpO0",
+  authDomain: "liblog-82d18.firebaseapp.com",
+  projectId: "liblog-82d18",
+  storageBucket: "liblog-82d18.appspot.com",
+  messagingSenderId: "679472288411",
+  appId: "1:679472288411:web:ef86bcef1b4061d8bf2c3e"
+}
+initializeApp(firebaseConfig)
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(registration => {
-    console.log(registration)
     messages = [`registered`, ...messages]
+  })
 
-    registration.pushManager.getSubscription().then(subscription => {
-      if (subscription !== null) {
-        messages = ['subscribed', ...messages]
-      } else {
-        messages = ['NOT subscribed', ...messages]
+  navigator.serviceWorker.ready.then(registration => {
+    const messaging = getMessaging()
+    const tokenOptions = {
+      vapidKey: 'BIG5JfJDrbiX68TWxDxyQlirVXBHzZUP-1-nP8Ebn5ncZykBtbbXWGhhuUPLk7cmpmAbI32UNrTInH1Jzobaob4',
+      serviceWorkerRegistration: registration
+    }
 
-        const options = {
-          userVisibleOnly: true,
+    getToken(messaging, tokenOptions)
+      .then(currentToken => {
+        if (currentToken) {
+          messages = ['got token', ...messages]
+          token = currentToken
+        } else {
+          console.error('No registration token available. Request permission to generate one.')
         }
-        registration.pushManager.subscribe(options).then(subscription => {
-          messages = ['subscribed', ...messages]
-        }).catch(error => {
-          console.error(error)
-        })
-      }
-    })
+      }).catch(err => {
+        console.error('An error occurred while retrieving token. ', err)
+      })
   })
 }
 </script>
 
 <main>
 	<h1>Hello {name}!</h1>
+  <label>
+    <span>Token</span>
+    <input type="text" value="{token}" readonly style="width: 100%;">
+  </label>
   <div style="border: solid 1px #000; padding: 1rem;">
     {#each messages as message}
       <div>{message}</div>
