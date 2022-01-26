@@ -1,10 +1,22 @@
 <script>
-	export let name;
+export let name;
+export let messages = [];
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(function (event) {
+    console.log(event)
+    messages = [`registered`, ...messages]
+  })
+}
 </script>
 
 <main>
 	<h1>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
+  <div style="border: solid 1px #000; padding: 1rem;">
+    {#each messages as message}
+      {message}
+    {/each}
+  </div>
 </main>
 
 <style>
