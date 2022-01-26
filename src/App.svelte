@@ -3,7 +3,8 @@ import { initializeApp } from 'firebase/app'
 import { getMessaging, getToken } from 'firebase/messaging'
 export let name = ''
 
-let messages = []
+let clientLog = ''
+let serverLog = ''
 let token = ''
 
 const firebaseConfig = {
@@ -16,9 +17,18 @@ const firebaseConfig = {
 }
 initializeApp(firebaseConfig)
 
+const updateServiceWorker = async () => {
+  const registration = await navigator.serviceWorker.getRegistration()
+  registration.update()
+}
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(registration => {
-    messages = [`registered`, ...messages]
+    clientLog += 'registered\n'
+  })
+
+  navigator.serviceWorker.addEventListener('message', event => {
+    serverLog += `${event.data.msg}\n`
   })
 
   navigator.serviceWorker.ready.then(registration => {
@@ -31,7 +41,7 @@ if ('serviceWorker' in navigator) {
     getToken(messaging, tokenOptions)
       .then(currentToken => {
         if (currentToken) {
-          messages = ['got token', ...messages]
+          clientLog += 'got token\n'
           token = currentToken
         } else {
           console.error('No registration token available. Request permission to generate one.')
@@ -49,11 +59,17 @@ if ('serviceWorker' in navigator) {
     <span>Token</span>
     <input type="text" value="{token}" readonly style="width: 100%;">
   </label>
-  <div style="border: solid 1px #000; padding: 1rem;">
-    {#each messages as message}
-      <div>{message}</div>
-    {/each}
+  <div style="display: flex;">
+    <label style="width: 50%;">
+      <span>Client Log</span>
+      <textarea readonly style="width: 100%; height: 500px;">{clientLog}</textarea>
+    </label>
+    <label style="width: 50%;">
+      <span>Server Log</span>
+      <textarea readonly style="width: 100%; height: 500px;">{serverLog}</textarea>
+    </label>
   </div>
+  <button on:click={updateServiceWorker}>Update</button>
 </main>
 
 <style>
